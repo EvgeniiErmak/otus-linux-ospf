@@ -1,0 +1,19 @@
+---
+# Указывать ли router-id в frr.conf
+router_id_enable: false
+# false - ассиметричный роутинг, true - симметричный
+symmetric_routing: false
+# Описания интерфейсов OSPF для каждого роутера
+descriptions:
+  router1:
+    enp0s8: r1-r2
+    enp0s9: r1-r3
+    enp0s10: net_router1
+  router2:
+    enp0s8: r1-r2
+    enp0s9: r2-r3
+    enp0s10: net_router2
+  router3:
+    enp0s8: r2-r3
+    enp0s9: r1-r3
+    enp0s10: net_router3

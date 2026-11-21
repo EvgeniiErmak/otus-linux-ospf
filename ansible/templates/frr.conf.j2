@@ -1,0 +1,45 @@
+!Указание версии FRR
+frr version 8.1
+frr defaults traditional
+!Указываем имя машины
+hostname {{ ansible_hostname }}
+log syslog informational
+no ipv6 forwarding
+service integrated-vtysh-config
+!
+{% for iface in ['enp0s8', 'enp0s9', 'enp0s10'] %}
+{% set ip = hostvars[inventory_hostname]['ansible_' + iface]['ipv4'] %}
+interface {{ iface }}
+ description {{ descriptions[ansible_hostname][iface] }}
+ ip address {{ ip.address }}/{{ ip.prefix }}
+ ip ospf mtu-ignore
+{% if iface == 'enp0s8' %}
+{% if ansible_hostname == 'router1' %}
+ ip ospf cost 1000
+{% elif ansible_hostname == 'router2' and symmetric_routing == true %}
+ ip ospf cost 1000
+{% else %}
+ !ip ospf cost 450
+{% endif %}
+{% else %}
+ !ip ospf cost 45
+{% endif %}
+ ip ospf hello-interval 10
+ ip ospf dead-interval 30
+!
+{% endfor %}
+!Начало настройки OSPF
+router ospf
+ {% if router_id_enable == false %}!{% endif %}router-id {{ router_id }}
+{% for iface in ['enp0s8', 'enp0s9', 'enp0s10'] %}
+{% set ip = hostvars[inventory_hostname]['ansible_' + iface]['ipv4'] %}
+ network {{ ip.network }}/{{ ip.prefix }} area 0
+{% endfor %}
+{% for iface in ['enp0s8', 'enp0s9'] %}
+{% set o = hostvars[inventory_hostname]['ansible_' + iface]['ipv4']['address'].split('.') %}
+ neighbor {{ o[0] }}.{{ o[1] }}.{{ o[2] }}.{{ 3 - (o[3] | int) }}
+{% endfor %}
+ default-information originate always
+!
+!Указываем адрес log-файла
+log file /var/log/frr/frr.log
